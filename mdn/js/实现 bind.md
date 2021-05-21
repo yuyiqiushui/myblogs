@@ -154,4 +154,63 @@ greetingValue
 
 我们的结果和真正的 bind 出来的结果区别在哪里呢？主要有两点：
 
-1、调用 greeting 的时候， this 应该指向  newObj
+1、调用 greeting 的时候， this 应该指向  newObj，这就是因为 MDN 提到的 " 绑定函数也可以使用 new 运算符构造，提供的 this 值会被忽略"。新的 this 指向就应该是 new 运算符构造出来的 this 指向，即 newObj 。而在我们的 myBind 中，返回的匿名函数中， this 却还是指向 obj。
+
+2、newObj.value 应该打印出 greeting 的 value 属性，因为 newObj 应该 "继承" 自 greeting 。而我们的 myBind ，因为内部没有对 prototype 进行任何更新，那么 newObj 默认继承自 myBind 返回的匿名函数的原型对象，即 Object，Object 上没有 value，当然打印出来的就是    undefined  。
+
+怎么办呢？我们先把代码放上，然后一点一点分析：
+
+```javascript
+Function.prototype.myBind = function() {
+    var thatFunc = this, 
+        thatArg = arguments[0];
+    var args = Array.prototype.slice.call(arguments, 1)
+    if (typeof thatFunc !== 'function') {
+        throw new TypeError('Function.prototype.bind - ' +
+             'what is trying to be bound is not callable');
+    }
+    var fBound  = function() {
+        return thatFunc.apply(this instanceof fBound
+                 ? this
+                 : thatArg,
+                 args.concat(Array.prototype.slice.call(arguments)));
+        };
+    fBound.prototype = thatFunc.prototype;
+    return fBound;
+} 
+```
+
+this instanced fBound  这句话中的  this  ，如果是在  new  关键字调用情况下，会指向  newObj，而  newObj  就是 fBound  的实例， this  instanceof  fBound  就是  true，我们不再使用  thatArg 作为  greeting 的  this ，而是直接使用  newObj 作为  greeting  的  this 。而当作普通函数调用的时候， this  instanceof  fBound  就是  false，greeting 中的  this  依然指向  thatArg。
+
+我们已经满足的区别的第一点，区别的第二点就是通过  fBound.prototype = thatFunc.prototype  ；来实现。如果没有这句话，在  new  关键字调用下，newObj '继承' 自   
+
+Object ；加上这句话后，我们把  fBound  的  prototype  修改为  绑定函数的  prototype ，这样  newObj  就可以  "继承" 自  greeting 了。
+
+不过，上述代码还有一个问题，如果我们修改了 fBound 的 prototype，greeting 的  prototype 也会被修改。因此，我们需要一个中间变量 fNOP，让他等于一个空函数，通过 fNOP 来维护原型关系，并让 fBound,prototype 与 thatFunc.prototype 不再指向同一个原型函数。
+
+```javascript
+Function.prototype.myBind = function() {
+    var thatFunc = this, 
+        thatArg = arguments[0];
+    var args = Array.prototype.slice.call(arguments, 1)
+    if (typeof thatFunc !== 'function') {
+        throw new TypeError('Function.prototype.bind - ' +
+             'what is trying to be bound is not callable');
+    }
+    var fBound  = function() {
+        return thatFunc.apply(this instanceof fBound
+                 ? this
+                 : thatArg,
+                 args.concat(Array.prototype.slice.call(arguments)));
+        };
+    var fNOP = function() {};
+    if (thatFunc.prototype) {
+      fNOP.prototype = thatFunc.prototype; 
+    }
+    fBound.prototype = new fNOP();
+    return fBound;
+}
+```
+
+ fNOP 和 greeting 使用同一个 prototype ，而  fBound.prototype 实际上是  fNOP 的一个实例，而这个实例的 `__proto__` 才指向的是 greeting.prototype。因此，直接修改  fBound.prototype 并不会修改  greeting 的  prototype。
+
