@@ -180,7 +180,16 @@ function createComponent( component, props ) {
 }
 ```
 
-` se`
+` setComponentProps`  方法用来更新 `props`  ，在其中可以实现  `componentWillMount`  , `componentWillReceiveProps`  两个生命周期方法
+
+```react
+// set  props
+function setCompoennt ( component, props ){
+  if( !component.base ){
+		
+  }
+}
+```
 
 
 
