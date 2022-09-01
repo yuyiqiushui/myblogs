@@ -1,5 +1,10 @@
 import { handleRouter } from "./handle-router";
 
+let  prevRoute = ''
+let  nextRoute = ''
+export const getPrevRoute = () => prevRoute
+export const getNextRoute = () => nextRoute
+
 export const rewriteRouter = () => {
     window.addEventListener('popstate', () => {
         // popstate 触发的时候，路由已经完成导航了

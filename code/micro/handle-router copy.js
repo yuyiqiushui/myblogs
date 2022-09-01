@@ -9,6 +9,9 @@ export const handleRouter = async () => {
 
     // 加载下一个应用
 
+
+
+
     console.log('handleRouter');
     // 2、匹配子应用
     // 2.1 获取到当前的路由路径

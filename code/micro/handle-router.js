@@ -1,6 +1,7 @@
 // 处理路由变化的
 import { getApps} from '.'
 import { importHTML } from "./import-html";
+import { getNextRoute, getPrevRoute } from './rewrite-router';
 
 export const handleRouter = async () => {
 
